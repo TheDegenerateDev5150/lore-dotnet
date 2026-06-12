@@ -14,3 +14,4 @@ LoreVcs/
 **/.config/
 **/uv.lock
 .vscode
+.DS_Store
