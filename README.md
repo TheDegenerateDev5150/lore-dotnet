@@ -1,9 +1,10 @@
 # Lore C# SDK
 
 ## About
-This repository contains tools to exend Lore with C#. 
 
-Lore is an open source version control system that is designed for unprecedented scalability of both data and teams. It is optimized for projects that combine code with large binary assets, including games and entertainment, and caters for the needs of developers and artists alike. 
+This repository contains the C# SDK for integrating with Lore.
+
+Lore is an open source version control system that is designed for unprecedented scalability of both data and teams. It is optimized for projects that combine code with large binary assets, including games and entertainment, and caters to the needs of developers and artists alike.
 
 For full Lore documentation, architecture details, and contribution guidelines, visit the [main Lore repository](https://github.com/EpicGames/lore).
 
@@ -13,20 +14,6 @@ For full Lore documentation, architecture details, and contribution guidelines, 
 
 ```bash
 dotnet add package LoreVcs --project /<path-to>/project.csproj
-```
-
-### Nightly Build
-
-Nightly builds are published with a `-nightly.N` prerelease suffix. By default `dotnet` skips prereleases, so you need to either opt in with `--prerelease` or pin an exact version. To install the latest nightly:
-
-```bash
-dotnet add package LoreVcs --project /<path-to>/project.csproj --prerelease
-```
-
-To install a specific nightly, browse the [package history](https://www.nuget.org/packages/LoreVcs) and pin the exact version:
-
-```bash
-dotnet add package LoreVcs --project /<path-to>/project.csproj --version 0.1.2-nightly.345
 ```
 
 ## Minimal example
@@ -147,7 +134,7 @@ export LORE_BUILD_PATH="/<path-to>/lore/target/release"
 
 Use this when you only need to develop the C# SDK against an existing Lore version.
 
-1. Download the header and binaries from [Lore's repository](https://github.com/EpicGames/lore) release page and place them under `/<path-to>/lore/`
+1. Download the header and binaries from the [Lore repository](https://github.com/EpicGames/lore) release page and place them under `/<path-to>/lore/`
 
 2. Set the environment variable `LORE_BUILD_PATH` to point to the download path:
 
@@ -191,104 +178,3 @@ Format the code with CSharpier (installed during [Set up your dev environment](#
 ```bash
 dotnet csharpier .
 ```
-
-## Releasing
-
-Recommended reading [NuGet Package Versioning](https://learn.microsoft.com/en-us/nuget/concepts/package-versioning?tabs=semver20sort)
-
-Assumes the dev environment from [Contributing](#contributing) is set up, that is, the Lore library has been fetched and the C# bindings regenerated against the version you're releasing.
-
-### Package layout
-
-A release consists of four packages built at one shared version: the portable `LoreVcs` meta package plus one thin `LoreVcs.runtime.<rid>` package per platform, so consumers download only the native library they need.
-
-- **`LoreVcs`** — the portable managed assembly and `runtime.json`. No native library. Built once, on any host. Its `runtime.json` is stamped with the shared release version so the matching runtime package is resolved at project restore.
-- **`LoreVcs.runtime.osx-arm64`**, **`LoreVcs.runtime.linux-x64`**, **`LoreVcs.runtime.win-x64`** — each contains only that platform's native library under `runtimes/<rid>/native`.
-
-### Build the packages
-
-1. Set `LORE_VERSION` for a stable release or also `LORE_REVISION` for a nightly release
-
-```bash
-# Release 0.1.2
-export LORE_VERSION="0.1.2"
-
-# Prerelease 0.1.2-nightly.345
-export LORE_REVISION="345"
-```
-
-2. Build the host's runtime (native) package
-
-```bash
-dotnet pack -c Release LoreVcs.Runtime/LoreVcs.Runtime.csproj -p:Version=$LORE_VERSION${LORE_REVISION:+-nightly.$LORE_REVISION}
-```
-
-This produces `LoreVcs.runtime.<host-rid>` (e.g. `LoreVcs.runtime.osx-arm64` on an Apple-silicon Mac).
-
-3. Create the `runtime.json` and build the portable meta package
-
-```bash
-uv run python generator/generate_runtime_json.py
-dotnet pack -c Release LoreVcs/LoreVcs.csproj -p:Version=$LORE_VERSION${LORE_REVISION:+-nightly.$LORE_REVISION}
-```
-
-generate_runtime_json.py stamps `LoreVcs/runtime.json` with `$LORE_VERSION` and appends `-nightly.$LORE_REVISION` when `LORE_REVISION` is set.
-
-### Verify the packaged SDK
-
-Use this to verify the packaging itself, i.e. the LoreVcs meta package, its `runtime.json`, and the runtime identifier packages (`LoreVcs.runtime.<rid>`) resolve and deploy the native library.
-
-1. Build all packages at one version
-
-```bash
-export LORE_VERSION="0.1.2"
-dotnet pack -c Release LoreVcs.Runtime/LoreVcs.Runtime.csproj -p:Version=$LORE_VERSION
-uv run python generator/generate_runtime_json.py
-dotnet pack -c Release LoreVcs/LoreVcs.csproj -p:Version=$LORE_VERSION
-```
-
-2. Collect both .nupkg files into one local feed and register it
-
-```bash
-mkdir -p "$PWD/local-feed"
-cp LoreVcs/bin/Release/LoreVcs.$LORE_VERSION.nupkg LoreVcs.Runtime/bin/Release/LoreVcs.runtime.*.$LORE_VERSION.nupkg "$PWD/local-feed/"
-dotnet nuget add source "$PWD/local-feed" --name lore-local
-```
-
-3. Consume only the meta package from a fresh project and run with a RID
-
-```bash
-mkdir -p /tmp/lore-consumer && cd /tmp/lore-consumer
-dotnet new console
-dotnet add package LoreVcs --version $LORE_VERSION
-# Paste the "Minimal example" above into Program.cs, then:
-dotnet run -r <runtime-identifier>
-```
-
-A successful run restores `LoreVcs` and `LoreVcs.runtime.<rid>`, and loads the native library.
-
-4. Remove the local feed when done with
-
-```bash
-dotnet nuget remove source lore-local
-```
-
-### Publish to nuget.org
-
-1. Get a nuget.org API key from https://www.nuget.org/account/apikeys scoped to the `LoreVcs` packages.
-
-```bash
-export NUGET_API_KEY=<nuget-org-key>
-```
-
-2. Push all four packages. nuget.org automatically treats `-nightly.N` versions as prereleases, so the same feed serves both stable and nightly builds.
-
-```bash
-export PKG_VERSION="$LORE_VERSION${LORE_REVISION:+-nightly.$LORE_REVISION}"
-export NUGET_URL="https://api.nuget.org/v3/index.json"
-
-dotnet nuget push "LoreVcs/bin/Release/LoreVcs.$PKG_VERSION.nupkg" --api-key "$NUGET_API_KEY" --source $NUGET_URL
-dotnet nuget push "LoreVcs.Runtime/bin/Release/LoreVcs.runtime.*.$PKG_VERSION.nupkg" --api-key "$NUGET_API_KEY" --source $NUGET_URL
-```
-
-The runtime push runs once per host (each host produced its own `LoreVcs.runtime.<rid>` package); the meta package is pushed once.
