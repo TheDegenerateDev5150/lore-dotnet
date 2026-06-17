@@ -15,7 +15,10 @@
         <PackageId>$(LorePackageName)</PackageId>
         <Authors>Unreal Cloud Services</Authors>
         <Company>Epic Games Inc.</Company>
+        <Description>C# SDK for Lore, a scalable version control system for code and large binary assets.</Description>
+        <PackageProjectUrl>https://github.com/EpicGames/lore-dotnet</PackageProjectUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <!--
@@ -30,6 +33,7 @@
     <ItemGroup>
         <None Include="runtime.json" Pack="true" PackagePath="/" />
         <None Include="../LICENSE" Pack="true" PackagePath="/" />
+        <None Include="../README.md" Pack="true" PackagePath="/" />
     </ItemGroup>
 
     <!--

@@ -77,7 +77,7 @@ Supported runtime identifiers for the `LoreVcs` package are
 
 See [.NET RID Catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) for more information on runtime identifiers
 
-For comprehensive examples, see the [examples directory](examples/). Both [examples/example/Program.cs](examples/example/Program.cs) (fluent API) and [examples/example-native/Program.cs](examples/example-native/Program.cs) (low-level native API) run offline by default; pass a remote URL (e.g. `lore://localhost`) as the first argument to exercise the online push/clone flow. See [examples/README.md](examples/README.md) for details, including how to run a local Lore server.
+For comprehensive examples, see the [examples directory](https://github.com/EpicGames/lore-dotnet/tree/main/examples). Both [examples/example/Program.cs](https://github.com/EpicGames/lore-dotnet/blob/main/examples/example/Program.cs) (fluent API) and [examples/example-native/Program.cs](https://github.com/EpicGames/lore-dotnet/blob/main/examples/example-native/Program.cs) (low-level native API) run offline by default; pass a remote URL (e.g. `lore://localhost`) as the first argument to exercise the online push/clone flow. See [examples/README.md](https://github.com/EpicGames/lore-dotnet/blob/main/examples/README.md) for details, including how to run a local Lore server.
 
 ## Contributing
 
@@ -155,13 +155,13 @@ If you change anything under `generator/templates` or pull a new Lore pre-built 
 
 ### Run the examples
 
-The example projects reference LoreVcs via [ProjectReference](examples/example/example.csproj#L10), so they pick up the freshly built assembly and the host's native library directly from your working tree. No runtime identifier is needed as the native library is copied next to the build output.
+The example projects reference LoreVcs via [ProjectReference](https://github.com/EpicGames/lore-dotnet/blob/main/examples/example/example.csproj#L10), so they pick up the freshly built assembly and the host's native library directly from your working tree. No runtime identifier is needed as the native library is copied next to the build output.
 
 ```bash
 dotnet run --project examples/example/example.csproj
 ```
 
-Replace `example` with `example-native` to run the low-level native example. See [examples/README.md](examples/README.md) for offline/online run modes and local server setup.
+Replace `example` with `example-native` to run the low-level native example. See [examples/README.md](https://github.com/EpicGames/lore-dotnet/blob/main/examples/README.md) for offline/online run modes and local server setup.
 
 ### Run the test suite
 
