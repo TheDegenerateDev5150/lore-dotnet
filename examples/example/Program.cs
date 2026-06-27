@@ -38,17 +38,6 @@ static void EventHandler(LoreEventFFI loreEvent, ulong userContext)
     }
 }
 
-static void verifyResult(string operation_name, int result)
-{
-    if (result != 0)
-    {
-        Console.WriteLine($"Lore {operation_name} failed.");
-        Environment.Exit(1);
-    }
-
-    Console.WriteLine($"Lore {operation_name} success.");
-}
-
 static void createFiles(string repository_name)
 {
     string[] files = {
@@ -61,51 +50,63 @@ static void createFiles(string repository_name)
     }
 }
 
-var logConfig = new LoreLogConfig { FilePath = "./LoreRepositories", File = true };
-Lore.LogConfigure(logConfig);
+// Lore operations throw a LoreError when they finish with a non-zero return
+// code; the exception message carries the underlying error detail. A single
+// try/catch around the workflow is all that is needed to handle failures.
+try
+{
+    var logConfig = new LoreLogConfig { FilePath = "./LoreRepositories", File = true };
+    Lore.LogConfigure(logConfig);
 
-// Register a global logger. Disposed automatically when out of scope, or when globalLogger.Dispose() is called manually
-using var globalLogger = Lore.GlobalCallback(
-    LoreEventTag.LOG,
-    (loreEvent, userContext) =>
-    {
-        var logEvent = loreEvent.GetData<LoreLogEventDataFFI>();
-        if (logEvent.Level > LoreLogLevel.DEBUG)
+    // Register a global logger. Disposed automatically when out of scope, or when globalLogger.Dispose() is called manually
+    using var globalLogger = Lore.GlobalCallback(
+        LoreEventTag.LOG,
+        (loreEvent, userContext) =>
         {
-            Console.WriteLine($"{logEvent.Message}");
+            var logEvent = loreEvent.GetData<LoreLogEventDataFFI>();
+            if (logEvent.Level > LoreLogLevel.DEBUG)
+            {
+                Console.WriteLine($"{logEvent.Message}");
+            }
         }
+    );
+
+    using var globalArgs = new LoreGlobalArgs { RepositoryPath = REPOSITORY_PATH, Offline = !ONLINE };
+
+    using var repoArgs = new LoreRepositoryCreateArgs { RepositoryUrl = REPOSITORY_URL };
+    Lore.RepositoryCreate(globalArgs, repoArgs).Callback(EventHandler).Wait();
+    Console.WriteLine("Repository created.");
+
+    createFiles(REPOSITORY_NAME);
+
+    using var stageArgs = new LoreFileStageArgs
+    {
+        Paths = new string[] { $"./LoreRepositories/{REPOSITORY_NAME}/file.txt", $"./LoreRepositories/{REPOSITORY_NAME}/log.txt" }
+    };
+    Lore.FileStage(globalArgs, stageArgs).Callback(EventHandler).Wait();
+    Console.WriteLine("Files staged.");
+
+    using var commitArgs = new LoreRevisionCommitArgs { Message = "Initial Commit" };
+    Lore.RevisionCommit(globalArgs, commitArgs).Callback(EventHandler).Wait();
+    Console.WriteLine("Revision committed.");
+
+    if (ONLINE)
+    {
+        using var pushArgs = new LoreBranchPushArgs();
+        Lore.BranchPush(globalArgs, pushArgs).Callback(EventHandler).Wait();
+        Console.WriteLine("Branch pushed.");
+
+        using var globalArgsClone = new LoreGlobalArgs { RepositoryPath = REPOSITORY_PATH + "_clone" };
+        using var cloneArgs = new LoreRepositoryCloneArgs { RepositoryUrl = REPOSITORY_URL };
+        Lore.RepositoryClone(globalArgsClone, cloneArgs).Callback(EventHandler).Wait();
+        Console.WriteLine("Repository cloned.");
     }
-);
 
-using var globalArgs = new LoreGlobalArgs { RepositoryPath = REPOSITORY_PATH, Offline = !ONLINE };
-
-using var repoArgs = new LoreRepositoryCreateArgs { RepositoryUrl = REPOSITORY_URL };
-var result = Lore.RepositoryCreate(globalArgs, repoArgs).Callback(EventHandler).Wait();
-verifyResult("RepositoryCreate", result);
-
-createFiles(REPOSITORY_NAME);
-
-using var stageArgs = new LoreFileStageArgs
-{
-    Paths = new string[] { $"./LoreRepositories/{REPOSITORY_NAME}/file.txt", $"./LoreRepositories/{REPOSITORY_NAME}/log.txt" }
-};
-result = Lore.FileStage(globalArgs, stageArgs).Callback(EventHandler).Wait();
-verifyResult("FileStage", result);
-
-using var commitArgs = new LoreRevisionCommitArgs { Message = "Initial Commit" };
-result = Lore.RevisionCommit(globalArgs, commitArgs).Callback(EventHandler).Wait();
-verifyResult("RevisionCommit", result);
-
-if (ONLINE)
-{
-    using var pushArgs = new LoreBranchPushArgs();
-    result = Lore.BranchPush(globalArgs, pushArgs).Callback(EventHandler).Wait();
-    verifyResult("BranchPush", result);
-
-    using var globalArgsClone = new LoreGlobalArgs { RepositoryPath = REPOSITORY_PATH + "_clone" };
-    using var cloneArgs = new LoreRepositoryCloneArgs { RepositoryUrl = REPOSITORY_URL };
-    result = Lore.RepositoryClone(globalArgsClone, cloneArgs).Callback(EventHandler).Wait();
-    verifyResult("RepositoryClone", result);
+    Lore.Shutdown();
+    Console.WriteLine("Done.");
 }
-
-Lore.Shutdown();
+catch (LoreError error)
+{
+    Console.WriteLine($"Lore operation failed: {error.Message}");
+    Environment.Exit(1);
+}

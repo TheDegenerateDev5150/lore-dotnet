@@ -271,8 +271,24 @@ public class LoreFluentAPITests
             Offline = true,
             RepositoryPath = "/tmp/nonexistent-repo-path-" + Guid.NewGuid()
         };
-        var result = Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).Wait();
-        Assert.NotEqual(0, result);
+        var error = Assert.Throws<LoreError>(
+            () => Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).Wait()
+        );
+        Assert.NotEqual(0, error.ReturnCode);
+    }
+
+    [Fact]
+    public async Task WaitAsync_NonZero_ReturnCode()
+    {
+        var invalidArgs = new LoreGlobalArgs
+        {
+            Offline = true,
+            RepositoryPath = "/tmp/nonexistent-repo-path-" + Guid.NewGuid()
+        };
+        var error = await Assert.ThrowsAsync<LoreError>(
+            () => Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).WaitAsync()
+        );
+        Assert.NotEqual(0, error.ReturnCode);
     }
 
     [Fact]
@@ -283,10 +299,24 @@ public class LoreFluentAPITests
             Offline = true,
             RepositoryPath = "/tmp/nonexistent-repo-path-" + Guid.NewGuid()
         };
-        var events = Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).Collect();
-        var completeEvents = events.OfType<LoreCompleteEventData>().ToList();
-        Assert.Single(completeEvents);
-        Assert.NotEqual(0, completeEvents[0].Status);
+        var error = Assert.Throws<LoreError>(
+            () => Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).Collect()
+        );
+        Assert.NotEqual(0, error.ReturnCode);
+    }
+
+    [Fact]
+    public async Task CollectAsync_NonZero_ReturnCode()
+    {
+        var invalidArgs = new LoreGlobalArgs
+        {
+            Offline = true,
+            RepositoryPath = "/tmp/nonexistent-repo-path-" + Guid.NewGuid()
+        };
+        var error = await Assert.ThrowsAsync<LoreError>(
+            () => Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).CollectAsync()
+        );
+        Assert.NotEqual(0, error.ReturnCode);
     }
 
     [Fact]
@@ -298,10 +328,16 @@ public class LoreFluentAPITests
             RepositoryPath = "/tmp/nonexistent-repo-path-" + Guid.NewGuid()
         };
         var events = new List<LoreEvent>();
-        await foreach (var ev in Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).AsyncIter())
+        // The iterator yields the events first, then throws once the operation
+        // completes with a non-zero return code.
+        var error = await Assert.ThrowsAsync<LoreError>(async () =>
         {
-            events.Add(ev);
-        }
+            await foreach (var ev in Lore.RepositoryStatus(invalidArgs, new LoreRepositoryStatusArgs()).AsyncIter())
+            {
+                events.Add(ev);
+            }
+        });
+        Assert.NotEqual(0, error.ReturnCode);
         var completeEvents = events.OfType<LoreCompleteEventData>().ToList();
         Assert.Single(completeEvents);
         Assert.NotEqual(0, completeEvents[0].Status);
@@ -596,14 +632,13 @@ public class LoreFluentAPITests
     public void Complete_And_End_Events_Emitted_For_All_Methods()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDir);
 
-        var globalArgs = new LoreGlobalArgs { Offline = true, RepositoryPath = tempDir };
-
-        // wait + callback
+        // wait + callback (fresh path: re-creating a repository at an existing
+        // path now throws a LoreError)
+        var waitArgs = new LoreGlobalArgs { Offline = true, RepositoryPath = Path.Combine(tempDir, "wait") };
         var waitEvents = new List<LoreEvent>();
         var repoUrl1 = Guid.NewGuid().ToString();
-        Lore.RepositoryCreate(globalArgs, new LoreRepositoryCreateArgs { RepositoryUrl = repoUrl1 })
+        Lore.RepositoryCreate(waitArgs, new LoreRepositoryCreateArgs { RepositoryUrl = repoUrl1 })
             .Callback((loreEvent, userContext) => { waitEvents.Add(loreEvent.Clone()); })
             .Wait();
 
@@ -611,8 +646,9 @@ public class LoreFluentAPITests
         Assert.Contains(waitEvents, e => e is LoreEndEventData);
 
         // collect
+        var collectArgs = new LoreGlobalArgs { Offline = true, RepositoryPath = Path.Combine(tempDir, "collect") };
         var repoUrl2 = Guid.NewGuid().ToString();
-        var collectEvents = Lore.RepositoryCreate(globalArgs, new LoreRepositoryCreateArgs { RepositoryUrl = repoUrl2 })
+        var collectEvents = Lore.RepositoryCreate(collectArgs, new LoreRepositoryCreateArgs { RepositoryUrl = repoUrl2 })
             .Collect();
 
         Assert.Contains(collectEvents, e => e is LoreCompleteEventData);
