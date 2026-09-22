@@ -998,7 +998,7 @@ public class LoreFluentAPITests
                 .ToList();
 
             Assert.Single(putEvents);
-            Assert.Equal(LoreErrorCode.NONE, putEvents[0].ErrorCode);
+            Assert.Equal((int)LoreErrorCode.NONE, putEvents[0].Error.ErrorCode);
             var putAddress = putEvents[0].Address;
 
             using var getArgs = new LoreStorageGetArgs
@@ -1026,7 +1026,7 @@ public class LoreFluentAPITests
             var completes = getEvents.OfType<LoreStorageGetItemCompleteEventData>().ToList();
 
             Assert.Single(completes);
-            Assert.Equal(LoreErrorCode.NONE, completes[0].ErrorCode);
+            Assert.Equal((int)LoreErrorCode.NONE, completes[0].Error.ErrorCode);
             Assert.Equal(payload, receivedBytes);
         }
         finally
@@ -1091,7 +1091,7 @@ public class LoreFluentAPITests
             {
                 if (ev is LoreStoragePutItemCompleteEventData putComplete)
                 {
-                    Assert.Equal(LoreErrorCode.NONE, putComplete.ErrorCode);
+                    Assert.Equal((int)LoreErrorCode.NONE, putComplete.Error.ErrorCode);
                     putAddress = putComplete.Address;
                 }
             }
@@ -1121,7 +1121,7 @@ public class LoreFluentAPITests
                 }
                 else if (ev is LoreStorageGetItemCompleteEventData getComplete)
                 {
-                    Assert.Equal(LoreErrorCode.NONE, getComplete.ErrorCode);
+                    Assert.Equal((int)LoreErrorCode.NONE, getComplete.Error.ErrorCode);
                     completes++;
                 }
             }

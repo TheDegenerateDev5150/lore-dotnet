@@ -213,14 +213,14 @@ public class LoreCustomTypesFromEventDataTests
         {
             Id = 1UL,
             Address = address,
-            ErrorCode = LoreErrorCode.NONE
+            Error = new LoreErrorDetail { ErrorCode = (int)LoreErrorCode.NONE }
         };
 
         Assert.Equal(LoreEventTag.STORAGE_PUT_ITEM_COMPLETE, eventData.Tag);
         Assert.Equal(1UL, eventData.Id);
         Assert.Equal(hashBytes, eventData.Address.Hash.Data);
         Assert.Equal(contextBytes, eventData.Address.Context.Data);
-        Assert.Equal(LoreErrorCode.NONE, eventData.ErrorCode);
+        Assert.Equal((int)LoreErrorCode.NONE, eventData.Error.ErrorCode);
     }
 
     [Fact]
@@ -280,12 +280,12 @@ public class LoreCustomTypesFromEventDataTests
         var eventData = new LoreStorageGetItemCompleteEventData
         {
             Id = 6UL,
-            ErrorCode = LoreErrorCode.ADDRESS_NOT_FOUND
+            Error = new LoreErrorDetail { ErrorCode = (int)LoreErrorCode.ADDRESS_NOT_FOUND }
         };
 
         Assert.Equal(LoreEventTag.STORAGE_GET_ITEM_COMPLETE, eventData.Tag);
         Assert.Equal(6UL, eventData.Id);
-        Assert.Equal(LoreErrorCode.ADDRESS_NOT_FOUND, eventData.ErrorCode);
+        Assert.Equal((int)LoreErrorCode.ADDRESS_NOT_FOUND, eventData.Error.ErrorCode);
     }
 
     [Fact]
@@ -306,7 +306,7 @@ public class LoreCustomTypesFromEventDataTests
                 Hash = new LoreHash(hashBytes),
                 Context = new LoreContext(contextBytes)
             },
-            ErrorCode = LoreErrorCode.NONE
+            Error = new LoreErrorDetail { ErrorCode = (int)LoreErrorCode.NONE }
         };
 
         Assert.Equal(LoreEventTag.STORAGE_COPY_ITEM_COMPLETE, eventData.Tag);
@@ -315,7 +315,7 @@ public class LoreCustomTypesFromEventDataTests
         Assert.Equal(targetPartition, eventData.TargetPartition);
         Assert.Equal(hashBytes, eventData.SourceAddress.Hash.Data);
         Assert.Equal(contextBytes, eventData.SourceAddress.Context.Data);
-        Assert.Equal(LoreErrorCode.NONE, eventData.ErrorCode);
+        Assert.Equal((int)LoreErrorCode.NONE, eventData.Error.ErrorCode);
     }
 
     [Fact]
@@ -326,14 +326,14 @@ public class LoreCustomTypesFromEventDataTests
             Id = 8UL,
             LocalSuccess = true,
             RemoteSuccess = false,
-            ErrorCode = LoreErrorCode.INTERNAL
+            Error = new LoreErrorDetail { ErrorCode = (int)LoreErrorCode.INTERNAL }
         };
 
         Assert.Equal(LoreEventTag.STORAGE_OBLITERATE_ITEM_COMPLETE, eventData.Tag);
         Assert.Equal(8UL, eventData.Id);
         Assert.True(eventData.LocalSuccess);
         Assert.False(eventData.RemoteSuccess);
-        Assert.Equal(LoreErrorCode.INTERNAL, eventData.ErrorCode);
+        Assert.Equal((int)LoreErrorCode.INTERNAL, eventData.Error.ErrorCode);
     }
 
     [Fact]
@@ -343,12 +343,12 @@ public class LoreCustomTypesFromEventDataTests
         {
             Id = 11UL,
             AlreadyDurable = true,
-            ErrorCode = LoreErrorCode.SLOW_DOWN
+            Error = new LoreErrorDetail { ErrorCode = (int)LoreErrorCode.SLOW_DOWN }
         };
 
         Assert.Equal(LoreEventTag.STORAGE_UPLOAD_ITEM_COMPLETE, eventData.Tag);
         Assert.Equal(11UL, eventData.Id);
         Assert.True(eventData.AlreadyDurable);
-        Assert.Equal(LoreErrorCode.SLOW_DOWN, eventData.ErrorCode);
+        Assert.Equal((int)LoreErrorCode.SLOW_DOWN, eventData.Error.ErrorCode);
     }
 }

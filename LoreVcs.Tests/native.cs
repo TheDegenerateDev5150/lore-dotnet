@@ -1259,7 +1259,7 @@ public class LoreStorageCommandTest : LoreBaseTest
                     if (loreEvent.Tag == LoreEventTag.STORAGE_PUT_ITEM_COMPLETE)
                     {
                         var ev = loreEvent.GetData<LoreStoragePutItemCompleteEventDataFFI>().Clone();
-                        Assert.Equal(LoreErrorCode.NONE, ev.ErrorCode);
+                        Assert.Equal((int)LoreErrorCode.NONE, ev.Error.ErrorCode);
                         putAddresses.Add(ev.Address);
                     }
                 }
@@ -1298,7 +1298,7 @@ public class LoreStorageCommandTest : LoreBaseTest
                     else if (loreEvent.Tag == LoreEventTag.STORAGE_GET_ITEM_COMPLETE)
                     {
                         var ev = loreEvent.GetData<LoreStorageGetItemCompleteEventDataFFI>().Clone();
-                        Assert.Equal(LoreErrorCode.NONE, ev.ErrorCode);
+                        Assert.Equal((int)LoreErrorCode.NONE, ev.Error.ErrorCode);
                         getCompletes++;
                     }
                 }
@@ -1384,7 +1384,7 @@ public class LoreStorageCommandTest : LoreBaseTest
                     if (loreEvent.Tag == LoreEventTag.STORAGE_PUT_ITEM_COMPLETE)
                     {
                         var ev = loreEvent.GetData<LoreStoragePutItemCompleteEventDataFFI>().Clone();
-                        Assert.Equal(LoreErrorCode.NONE, ev.ErrorCode);
+                        Assert.Equal((int)LoreErrorCode.NONE, ev.Error.ErrorCode);
                         putAddresses.Add(ev.Address);
                     }
                 }
@@ -1423,7 +1423,7 @@ public class LoreStorageCommandTest : LoreBaseTest
                     else if (loreEvent.Tag == LoreEventTag.STORAGE_GET_ITEM_COMPLETE)
                     {
                         var ev = loreEvent.GetData<LoreStorageGetItemCompleteEventDataFFI>().Clone();
-                        Assert.Equal(LoreErrorCode.NONE, ev.ErrorCode);
+                        Assert.Equal((int)LoreErrorCode.NONE, ev.Error.ErrorCode);
                         getCompletes++;
                     }
                 }
